@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>DtoGen</id>
+        <version>0.0.1-alpha</version>
+        <authors>Tomas Herceg</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>DtoGen is a simple generator for Data Transfer Objects (DTOs) and conversion methods between original objects and DTOs. You can exclude some properties from the class that are not needed in the DTO and also perform renaming and simple conversions.</description>
+        <tags>dto, generation, t4, codegen</tags>
+        <dependencies>
+            <group targetFramework=".NETFramework4.5.1">
+                <dependency id="Microsoft.CodeAnalysis.CSharp" version="0.6.4033103-beta" />
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="Content\DtoGenerator.tt.pp" target="content\DTOs\DtoGenerator.tt.pp" />
+        <file src="Content\DTOHeaders.cs.pp" target="content\DTOs\DTOHeaders.cs.pp" />
+        <file src="..\DtoGen.Core\bin\Debug\DtoGen.Core.dll" target="lib\net451\DtoGen.Core.dll" />
+        <file src="..\DtoGen.Core\bin\Debug\DtoGen.Core.pdb" target="lib\net451\DtoGen.Core.pdb" />
+    </files>
+</package>

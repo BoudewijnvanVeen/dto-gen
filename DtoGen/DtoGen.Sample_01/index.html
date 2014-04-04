@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>DtoGen Sample 1</title>
+    <script src="Scripts/jquery-2.1.0.min.js"></script>
+    <script src="Scripts/knockout-3.1.0.js"></script>
+    <script src="Scripts/knockout.mapping-latest.js"></script>
+</head>
+<body>
+
+    <h1>DtoGen Sample 1</h1>
+
+    <table data-bind="with: CurrentUser">
+        <tr>
+            <td>User ID: </td>
+            <td data-bind="text: Id"></td>
+        </tr>
+        <tr>
+            <td>Name: </td>
+            <td>
+                <input type="text" data-bind="value: Name" />
+            </td>
+        </tr>
+        <tr>
+            <td>E-mail: </td>
+            <td>
+                <input type="text" data-bind="value: Email" />
+            </td>
+        </tr>
+        <tr>
+            <td>Street: </td>
+            <td>
+                <input type="text" data-bind="value: Street" />
+            </td>
+        </tr>
+        <tr>
+            <td>City: </td>
+            <td>
+                <input type="text" data-bind="value: City" />
+            </td>
+        </tr>
+        <tr>
+            <td>ZIP: </td>
+            <td>
+                <input type="text" data-bind="value: ZIP" />
+            </td>
+        </tr>
+        <tr>
+            <td>Country: </td>
+            <td>
+                <input type="text" data-bind="value: Country" />
+            </td>
+        </tr>
+        <tr>
+            <td>State: </td>
+            <td>
+                <input type="text" data-bind="value: State" />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" value="Save Changes" data-bind="click: $parent.Save" />
+            </td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var IndexViewModel = function () {
+                var self = this;
+
+                self.CurrentUser = ko.observable();
+
+                self.Load = function () {
+                    $.getJSON("WebApi/GetUser/1", function (data) {
+                        self.CurrentUser(ko.mapping.fromJS(data));
+                    });
+                };
+
+                self.Save = function () {
+                    $.ajax({
+                        url: "WebApi/SaveUser",
+                        contentType: "application/json",
+                        type: "POST",
+                        data: ko.mapping.toJSON(self.CurrentUser()),
+                        success: function () {
+                            alert("Data saved successfully!");
+                        }
+                    });
+                };
+            };
+
+            var vm = new IndexViewModel();
+            vm.Load();
+            ko.applyBindings(vm);
+
+        });
+
+    </script>
+
+</body>
+</html>

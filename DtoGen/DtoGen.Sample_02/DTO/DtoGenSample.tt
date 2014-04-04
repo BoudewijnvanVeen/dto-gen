@@ -1,0 +1,73 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="$(ProjectDir)bin\DtoGen.Core.dll" #>
+<#@ assembly name="$(ProjectDir)bin\DtoGen.Sample_02.dll" #>
+<#@ import namespace="DtoGen.Core" #>
+<#@ import namespace="DtoGen.Sample_02.DTO" #>
+<#@ import namespace="DtoGen.Sample_02.Model" #>
+<#@ output extension=".cs" #>
+
+
+<#= 
+
+    // 1) In the previous sample we excluded the Books and Genres collections from our DTOs. 
+    //    However in more complicated scenarios we'll need them
+	//	  Never mind, at first we generate DTOs for elements of those collections.
+    //
+    // 2) The Genre entity contains Id and Name properties which are fine, however we'll
+	//    remove the UserId because we don't need it in the app. 
+	//    Web API uses JSON which does not handle back references well, so we'll exclude 
+	//	  the property User. In our scenario we won't either include the UserId property 
+	//    because since the book or genre is created, it belongs to the user and we are 
+	//    not going to change the owner. However there is no technical obstacle that would 
+	//    prevent us from not including it.
+	
+    Transform
+        .Create<Genre, GenreData>()
+		.Remove(u => u.UserId)
+		.Remove(u => u.User)
+        .Generate()
+#>
+
+<#=
+    // 3) In the Book entity there are also the UserId and User properties. We won't keep any of them.
+
+    Transform
+        .Create<Book, BookData>()
+        .Remove(u => u.UserId)
+        .Remove(u => u.User)
+        .Generate()
+#>
+
+<#=
+
+    // 4) Now we can generate the User DTO, this time with both collections. 
+	//    We have to change the type of the items in the collection and specify, 
+	//    how the collection is transfered.
+	//    Since the collection in the User entity is created from Entity Framework, 
+	//    we cannot just create a new collection with items from the DTO and pass 
+	//    it to the entity. That's why we have CollectionHandlers. They can synchronize
+	//    the collection in the DTO with the collection in the entity and apply
+	//    the changes made in the DTO.
+	//    There are currently two strategies:
+	//    a) ReplaceItemsInCollection deletes everything in the FavoriteGenres collection
+	//    and then places there a new entitites. This is suitable typically for 
+	//    the tables in the middle of M:N relationships - they only have a pair of
+	//    foreign keys and it is much easier to delete all and create them again than
+	//    to look which pair are present and which are not. 
+	//    b) SyncCollection requires to give it one column to distinguish the entitites.
+	//    Put there the primary key and it will work. The objects in DTO's collection, 
+	//    where the Id has no value (e.g. 0 for integer numbers), are considered as new
+	//    and they are added to the entity's collection. The objects which have the Id set,
+	//    are compared to those in the entity's collection and the property values are
+	//    set to the entity properties (it uses the PopulateSource method). The objects 
+	//    which are in the entity's collection but not in the DTO's collection, are considered
+	//    as removed and SyncCollectionHandler deletes them from the entity's collection
+	//    (which effectively removes them from the database).
+    Transform
+		.Create<User, UserData>()
+		.SyncCollection<Book, BookData>(u => u.Books, b => b.Id)
+		.ReplaceItemsInCollection<Genre, GenreData>(u => u.FavoriteGenres)
+		.Generate() 
+	
+#>
