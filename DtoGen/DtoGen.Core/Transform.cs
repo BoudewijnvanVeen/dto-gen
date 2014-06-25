@@ -19,7 +19,12 @@ namespace DtoGen.Core
         /// <summary>
         /// Gets the list of members that represents the mapping.
         /// </summary>
-        public List<PropertyMember> Members { get; private set; }
+        public List<PropertyMember> Members { get; protected set; }
+
+        /// <summary>
+        /// Hidden list of members that represents the mapping us
+        /// </summary>
+        protected List<PropertyMember> HiddenMembers { get; private set; }
 
         /// <summary>
         /// Gets or sets the type of the source class.
@@ -31,6 +36,8 @@ namespace DtoGen.Core
         /// </summary>
         public Type TargetType { get; set; }
 
+        public bool AllOrNoneCalled { get; protected set; }
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transform"/> class.
@@ -38,6 +45,7 @@ namespace DtoGen.Core
         protected Transform()
         {
             Tasks = new List<TransformTask>();
+            Members = new List<PropertyMember>();
         }
 
         /// <summary>
@@ -46,10 +54,9 @@ namespace DtoGen.Core
         public static Transform<TSource, TTarget> Create<TSource, TTarget>()
         {
             var transform = new Transform<TSource, TTarget>();
-            transform.Members = transform.LoadMembers<TSource>();
+            transform.HiddenMembers = transform.LoadMembers<TSource>();
             return transform;
         }
-
 
         /// <summary>
         /// Loads the members.
@@ -99,6 +106,11 @@ namespace DtoGen.Core
         /// </summary>
         public string Generate()
         {
+            if (!AllOrNoneCalled)
+            {
+                throw new Exception("Transform should start with .Create<TSource, TTarget>().All() or .Create<TSource, TTarget>().None()");
+            }
+            
             var transformRenderer = new TransformRenderer();
             return transformRenderer.Render(this);
         }
@@ -106,8 +118,6 @@ namespace DtoGen.Core
 
     public class Transform<TSource, TTarget> : Transform
     {
-
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Transform{TSource}"/> class.
         /// </summary>
@@ -118,12 +128,42 @@ namespace DtoGen.Core
         }
 
         /// <summary>
+        /// Use this to start with full member list
+        /// </summary>
+        public Transform<TSource, TTarget> All()
+        {
+            AllOrNoneCalled = true;
+            Members = HiddenMembers;
+            return this;
+        }
+
+        /// <summary>
+        /// Use this to start with an empty member list
+        /// </summary>
+        public Transform<TSource, TTarget> None()
+        {
+            AllOrNoneCalled = true;
+            return this;
+        }
+
+        /// <summary>
+        /// Removes the specified property on the first object from the mapping.
+        /// </summary>
+        public Transform<TSource, TTarget> Add(Expression<Func<TSource, object>> propertySelector)
+        {
+            var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
+            var member = GetProperty(propertyName, HiddenMembers);
+            Members.Add(member);
+            return this;
+        }
+
+        /// <summary>
         /// Removes the specified property on the first object from the mapping.
         /// </summary>
         public Transform<TSource, TTarget> Remove(Expression<Func<TSource, object>> propertySelector)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
-            var member = GetProperty(propertyName, Members);
+            var member = GetProperty(propertyName, HiddenMembers);
             Members.Remove(member);
             return this;
         }
@@ -134,7 +174,7 @@ namespace DtoGen.Core
         public Transform<TSource, TTarget> Rename(Expression<Func<TSource, object>> propertySelector, string newPropertyName)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
-            var member = GetProperty(propertyName, Members);
+            var member = GetProperty(propertyName, HiddenMembers);
             member.TargetName = newPropertyName;
             return this;
         }
@@ -145,7 +185,7 @@ namespace DtoGen.Core
         public Transform<TSource, TTarget> ConvertTo<TTargetType>(Expression<Func<TSource, object>> propertySelector)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
-            var member = GetProperty(propertyName, Members);
+            var member = GetProperty(propertyName, HiddenMembers);
             member.TargetType = typeof(TTargetType);
             member.PropertyMemberRenderer = new AssignmentWithConvertPropertyMemberRenderer(member);
             return this;
@@ -159,7 +199,7 @@ namespace DtoGen.Core
             where T2 : class
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
-            var member = GetProperty(propertyName, Members);
+            var member = GetProperty(propertyName, HiddenMembers);
             member.TargetType = typeof(ICollection<T2>);
             member.PropertyMemberRenderer = new ReplaceEntriesCollectionHandlerPropertyRenderer(member);
             return this;
@@ -175,7 +215,7 @@ namespace DtoGen.Core
             where T2 : class
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
-            var member = GetProperty(propertyName, Members);
+            var member = GetProperty(propertyName, HiddenMembers);
             member.TargetType = typeof(ICollection<T2>);
 
             var keyPropertyName = Helpers.ExtractNameFromGetPropertyExpression(keySelector);
