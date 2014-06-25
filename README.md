@@ -34,6 +34,7 @@ Then open the T4 template and generate DTOs. This says that we have a class *Use
 
     <#=
         Transform.Create<User, UserData>()
+            .All()
             .Generate()
     #>
     
@@ -49,14 +50,25 @@ you don't want to have in those DTOs. Excluding properties is as simple as using
     
     <#=
         Transform.Create<User, UserData>()
+            .All()
             .Remove(x => x.SecretProperty)
             .Generate()
     #>
+
+You can also include some properties from the class so only these will be copied. Sometimes you want your DTO to be just a small subset of the original (large) class. 
+Including properties is as simple as starting empty by using the None() function followed by a Add() function.
     
+    <#=
+        Transform.Create<User, UserData>()
+            .None()
+            .Add(x => x.PublicProperty)
+            .Generate()
+    #>    
 Sometimes you need some properties to have different names. You can use Rename function:
     
     <#=
         Transform.Create<User, UserData>()
+            .All()
             .Rename(x => x.SomeName, "DifferentNameInDTO")
             .Generate()
     #>
@@ -65,6 +77,7 @@ If you need to convert values from one type to another, you can use:
     
     <#=
         Transform.Create<User, UserData>()
+            .All()
             .ConvertTo<string>(x => x.CreatedDate)
             .Generate()
     #>
