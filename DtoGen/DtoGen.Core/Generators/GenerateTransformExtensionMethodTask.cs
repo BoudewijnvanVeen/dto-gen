@@ -14,7 +14,8 @@ namespace DtoGen.Core.Generators
         /// <summary>
         /// Initializes a new instance of the <see cref="GenerateTransformExtensionMethodTask"/> class.
         /// </summary>
-        public GenerateTransformExtensionMethodTask(Transform transform) : base(transform)
+        public GenerateTransformExtensionMethodTask(Transform transform)
+            : base(transform)
         {
         }
 
@@ -23,8 +24,9 @@ namespace DtoGen.Core.Generators
         /// </summary>
         public override IEnumerable<MemberDeclarationSyntax> Render()
         {
+            var methodName = "TransformTo" + Transform.TargetTypeName;
             // TransformToTarget method
-            var method = SyntaxHelper.GenerateExtensionMethod("TransformToTarget", Transform.TargetType.FullName, new[]
+            var method = SyntaxHelper.GenerateExtensionMethod(methodName, Transform.TargetTypeName, new[]
                 {
                     SyntaxHelper.GenerateMethodParameter("source", Transform.SourceType.FullName, true)
                 },
@@ -32,14 +34,14 @@ namespace DtoGen.Core.Generators
                     SyntaxHelper.GenerateAttribute(
                         typeof(DtoConvertFunctionAttribute),
                         SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.SourceType)), 
-                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetType)),
+                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetTypeName)),
                         SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                     )
                 })
                 .WithBody(SyntaxFactory.Block(
                     new StatementSyntax[] {
                         SyntaxHelper.GenerateStaticMethodCall("EnsureInitialized", typeof (PropertyConverter).FullName),
-                        SyntaxHelper.GenerateVariableDeclarationAndObjectCreationStatement("target", Transform.TargetType.FullName),
+                        SyntaxHelper.GenerateVariableDeclarationAndObjectCreationStatement("target", Transform.TargetTypeName),
                     }.Concat(
                         Transform.Members.SelectMany(m => m.PropertyMemberRenderer.GetTransformCode()).ToArray()
                     ).Concat(new[] {
@@ -51,13 +53,13 @@ namespace DtoGen.Core.Generators
             var method2 = SyntaxHelper.GenerateExtensionMethod("PopulateTarget", null, new[]
                 {
                     SyntaxHelper.GenerateMethodParameter("source", Transform.SourceType.FullName, true),
-                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetType.FullName, false)
+                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetTypeName, false)
                 },
                 new[] { 
                     SyntaxHelper.GenerateAttribute(
                         typeof(DtoConvertFunctionAttribute),
                         SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.SourceType)), 
-                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetType)),
+                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetTypeName)),
                         SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
                     )
                 })
@@ -70,12 +72,12 @@ namespace DtoGen.Core.Generators
                 ));
 
             // generate the static class
-            var className = Transform.SourceType.Name + "Extensions";
+            var className = Transform.TargetTypeName + "Extensions";
             yield return SyntaxHelper.GenerateNamespace(Transform.SourceType.Namespace, new MemberDeclarationSyntax[]
             {
                 SyntaxHelper.GenerateClass(
                     className, 
-                    new[] { SyntaxKind.PublicKeyword, SyntaxKind.StaticKeyword }, 
+                    new[] { SyntaxKind.PublicKeyword, SyntaxKind.StaticKeyword, SyntaxKind.PartialKeyword,  }, 
                     new MemberDeclarationSyntax[] { method, method2 },
                     new[] { SyntaxHelper.GenerateAttribute(typeof(DtoGeneratedAttribute)) }
                 ) 

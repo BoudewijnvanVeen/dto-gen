@@ -35,7 +35,7 @@ namespace DtoGen.Core.Generators
         /// </summary>
         protected List<string> GetUsingsForNamespace()
         {
-            return new List<string>() { Transform.SourceType.Namespace, Transform.TargetType.Namespace };
+            return new List<string>() { Transform.SourceType.Namespace, Transform.TargetNameSpace };
         }
     }
 }

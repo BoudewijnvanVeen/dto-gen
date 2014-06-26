@@ -28,9 +28,9 @@ namespace DtoGen.Core.Generators
             var declarations = Transform.Members.SelectMany(m => m.PropertyMemberRenderer.GetDeclarationCode()).ToArray();
 
             // generate class
-            yield return SyntaxHelper.GenerateNamespace(Transform.TargetType.Namespace, new MemberDeclarationSyntax[]
+            yield return SyntaxHelper.GenerateNamespace(Transform.TargetNameSpace, new MemberDeclarationSyntax[]
             {
-                SyntaxHelper.GenerateClass(Transform.TargetType.Name, new [] { SyntaxKind.PublicKeyword, SyntaxKind.PartialKeyword }, declarations)
+                SyntaxHelper.GenerateClass(Transform.TargetTypeName, new [] { SyntaxKind.PublicKeyword, SyntaxKind.PartialKeyword }, declarations)
             }, 
             GetUsingsForNamespace());
         }

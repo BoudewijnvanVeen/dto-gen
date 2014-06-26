@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using DtoGen.Core.Generators;
 
 namespace DtoGen.Core
@@ -24,7 +25,7 @@ namespace DtoGen.Core
         /// <summary>
         /// Hidden list of members that represents the mapping us
         /// </summary>
-        protected List<PropertyMember> HiddenMembers { get; private set; }
+        protected List<PropertyMember> HiddenMembers { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the source class.
@@ -32,12 +33,14 @@ namespace DtoGen.Core
         public Type SourceType { get; set; }
 
         /// <summary>
-        /// Gets or sets the type of the target class.
+        /// Gets or sets the typeNAME of the target class.
         /// </summary>
-        public Type TargetType { get; set; }
+        public String TargetTypeName { get; set; }
 
-        public bool AllOrNoneCalled { get; protected set; }
-
+        /// <summary>
+        /// Gets or sets the Namespace of the target class.
+        /// </summary>
+        public String TargetNameSpace { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transform"/> class.
@@ -45,15 +48,16 @@ namespace DtoGen.Core
         protected Transform()
         {
             Tasks = new List<TransformTask>();
-            Members = new List<PropertyMember>();
+            HiddenMembers = new List<PropertyMember>();
         }
 
         /// <summary>
         /// Creates the transform between the two specified types.
         /// </summary>
-        public static Transform<TSource, TTarget> Create<TSource, TTarget>()
+        public static Transform<TSource> Create<TSource>()
         {
-            var transform = new Transform<TSource, TTarget>();
+            var transform = new Transform<TSource>();
+            transform.Members = transform.LoadMembers<TSource>();
             transform.HiddenMembers = transform.LoadMembers<TSource>();
             return transform;
         }
@@ -77,9 +81,9 @@ namespace DtoGen.Core
                     // standard property
                     members.Add(new PropertyMember()
                     {
-                        Type = prop.PropertyType, 
-                        Name = prop.Name, 
-                        TargetType = prop.PropertyType, 
+                        Type = prop.PropertyType,
+                        Name = prop.Name,
+                        TargetType = prop.PropertyType,
                         TargetName = prop.Name
                     });
                 }
@@ -104,52 +108,39 @@ namespace DtoGen.Core
         /// <summary>
         /// Returns the generated code.
         /// </summary>
-        public string Generate()
+        public string Generate(string targetTypeName, string targetNameSpace)
         {
-            if (!AllOrNoneCalled)
-            {
-                throw new Exception("Transform should start with .Create<TSource, TTarget>().All() or .Create<TSource, TTarget>().None()");
-            }
-            
+            TargetTypeName = targetTypeName;
+            TargetNameSpace = targetNameSpace;
+
             var transformRenderer = new TransformRenderer();
             return transformRenderer.Render(this);
         }
     }
 
-    public class Transform<TSource, TTarget> : Transform
+    public class Transform<TSource> : Transform
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Transform{TSource}"/> class.
         /// </summary>
         public Transform()
         {
-            SourceType = typeof (TSource);
-            TargetType = typeof (TTarget);
-        }
-
-        /// <summary>
-        /// Use this to start with full member list
-        /// </summary>
-        public Transform<TSource, TTarget> All()
-        {
-            AllOrNoneCalled = true;
-            Members = HiddenMembers;
-            return this;
+            SourceType = typeof(TSource);
         }
 
         /// <summary>
         /// Use this to start with an empty member list
         /// </summary>
-        public Transform<TSource, TTarget> None()
+        public Transform<TSource> None()
         {
-            AllOrNoneCalled = true;
+            Members.Clear();
             return this;
         }
 
         /// <summary>
         /// Removes the specified property on the first object from the mapping.
         /// </summary>
-        public Transform<TSource, TTarget> Add(Expression<Func<TSource, object>> propertySelector)
+        public Transform<TSource> Add(Expression<Func<TSource, object>> propertySelector)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
             var member = GetProperty(propertyName, HiddenMembers);
@@ -160,7 +151,7 @@ namespace DtoGen.Core
         /// <summary>
         /// Removes the specified property on the first object from the mapping.
         /// </summary>
-        public Transform<TSource, TTarget> Remove(Expression<Func<TSource, object>> propertySelector)
+        public Transform<TSource> Remove(Expression<Func<TSource, object>> propertySelector)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
             var member = GetProperty(propertyName, HiddenMembers);
@@ -171,18 +162,18 @@ namespace DtoGen.Core
         /// <summary>
         /// Renames the specified property on the first object to another name in the second object.
         /// </summary>
-        public Transform<TSource, TTarget> Rename(Expression<Func<TSource, object>> propertySelector, string newPropertyName)
+        public Transform<TSource> Rename(Expression<Func<TSource, object>> propertySelector, string newPropertyName)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
             var member = GetProperty(propertyName, HiddenMembers);
             member.TargetName = newPropertyName;
             return this;
         }
-        
+
         /// <summary>
         /// Convert the specified property on the first object to another type in the second object.
         /// </summary>
-        public Transform<TSource, TTarget> ConvertTo<TTargetType>(Expression<Func<TSource, object>> propertySelector)
+        public Transform<TSource> ConvertTo<TTargetType>(Expression<Func<TSource, object>> propertySelector)
         {
             var propertyName = Helpers.ExtractNameFromGetPropertyExpression(propertySelector);
             var member = GetProperty(propertyName, HiddenMembers);
@@ -194,7 +185,7 @@ namespace DtoGen.Core
         /// <summary>
         /// Deletes all items in the specified collection and replaces the contents with the items from a new collection.
         /// </summary>
-        public Transform<TSource, TTarget> ReplaceItemsInCollection<T1, T2>(Expression<Func<TSource, ICollection<T1>>> propertySelector)
+        public Transform<TSource> ReplaceItemsInCollection<T1, T2>(Expression<Func<TSource, ICollection<T1>>> propertySelector)
             where T1 : class
             where T2 : class
         {
@@ -208,7 +199,7 @@ namespace DtoGen.Core
         /// <summary>
         /// Synchronizes the collections using defined key properties.
         /// </summary>
-        public Transform<TSource, TTarget> SyncCollection<T1, T2>(
+        public Transform<TSource> SyncCollection<T1, T2>(
             Expression<Func<TSource, ICollection<T1>>> propertySelector,
             Expression<Func<T1, object>> keySelector)
             where T1 : class

@@ -18,7 +18,7 @@ namespace DtoGen.Core.Generators
         {
             var methodIdentifier = GenerateMethodIdentifier(methodName, className, typeArguments);
             return SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.InvocationExpression(methodIdentifier, 
+                SyntaxFactory.InvocationExpression(methodIdentifier,
                 SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments ?? new ArgumentSyntax[] { })))
             );
         }
@@ -72,7 +72,7 @@ namespace DtoGen.Core.Generators
         {
             return SyntaxFactory.LocalDeclarationStatement(
                 SyntaxFactory.VariableDeclaration(
-                    typeSyntaxFactory(), 
+                    typeSyntaxFactory(),
                     SyntaxFactory.SeparatedList(new[] {
                         SyntaxFactory.VariableDeclarator(
                             SyntaxFactory.Identifier(variableName), 
@@ -168,7 +168,7 @@ namespace DtoGen.Core.Generators
         public static TypeSyntax GenerateTypeSyntax(Type type)
         {
             var name = GetTypeName(type);
-            
+
             if (type.IsGenericType)
             {
                 var genericArguments = type.GetGenericArguments();
@@ -176,6 +176,14 @@ namespace DtoGen.Core.Generators
             }
 
             return SyntaxFactory.ParseTypeName(name);
+        }
+
+        /// <summary>
+        /// Generates the type syntax.
+        /// </summary>
+        public static TypeSyntax GenerateTypeSyntax(string typeName)
+        {
+            return SyntaxFactory.ParseTypeName(typeName);
         }
 
         /// <summary>

@@ -1,29 +1,26 @@
 ﻿<#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ assembly name="$(ProjectDir)bin\DtoGen.Core.dll" #>
-<#@ assembly name="$(ProjectDir)bin\DtoGen.Sample_01.dll" #>
+<#@ assembly name="$(ProjectDir)bin\Models.dll" #>
 <#@ import namespace="DtoGen.Core" #>
-<#@ import namespace="DtoGen.Sample_01.DTO" #>
-<#@ import namespace="DtoGen.Sample_01.Model" #>
+<#@ import namespace="Models" #>
 <#@ output extension=".cs" #>
 
 
 <#= 
-
-	// 1) We create a class names UserData in the DtoGen.Sample_01.DTO namespace. 
-	//    We are using the class DtoGen.Sample_01.Model.User as a template.
-	//
-	// 2) Then we say we don't want to the Books and Genres properties to the UserData class.
-	//    They are the Entity Framework navigation properties. We'll want to transform them
-	//    to DTOs in the next sample.
-    //
-	// 3) The last line say the library to generate the code.
-	
     Transform
-		.Create<User, UserData>()
+		.Create<User>()
 		.Remove(u => u.Books)							
 		.Remove(u => u.FavoriteGenres)
-		.Generate() 
-	
+		.Generate("UserDTO", "DtoGen.Sample_01.DTO")		
+#>
+
+<#= 
+    Transform
+		.Create<User>()
+		.None()
+		.Add(u => u.Id)							
+		.Add(u => u.Name)
+		.Generate("UserDTO2", "DtoGen.Sample_01.DTO")		
 #>
 

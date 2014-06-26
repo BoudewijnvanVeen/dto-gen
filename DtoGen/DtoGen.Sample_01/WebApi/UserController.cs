@@ -5,6 +5,7 @@ using System.Linq;
 using System.Web.Http;
 using DtoGen.Sample_01.DTO;
 using DtoGen.Sample_01.Model;
+using Models;
 
 namespace DtoGen.Sample_01.WebApi
 {
@@ -26,7 +27,7 @@ namespace DtoGen.Sample_01.WebApi
         /// Gets the user with specified ID.
         /// </summary>
         [Route("GetUser/{id}")]
-        public UserData GetUser(int id)
+        public UserDTO GetUser(int id)
         {
             using (var dc = CreateDbContext())
             {
@@ -36,7 +37,7 @@ namespace DtoGen.Sample_01.WebApi
                 // Project the entity to DTO and pass it to the user.
                 // The TransformToTarget method creates a new DTO and fills 
                 // its properties with values from the entity.
-                return user.TransformToTarget();
+                return user.TransformToUserDTO();
             }
         }
 
@@ -45,7 +46,7 @@ namespace DtoGen.Sample_01.WebApi
         /// Saves the changes in the user object.
         /// </summary>
         [Route("SaveUser")]
-        public void Post(UserData modifiedUser)
+        public void Post(UserDTO modifiedUser)
         {
             using (var dc = CreateDbContext())
             {

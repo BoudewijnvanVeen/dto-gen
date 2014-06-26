@@ -14,7 +14,8 @@ namespace DtoGen.Core.Generators
         /// <summary>
         /// Initializes a new instance of the <see cref="GenerateTransformBackExtensionMethodTask"/> class.
         /// </summary>
-        public GenerateTransformBackExtensionMethodTask(Transform transform) : base(transform)
+        public GenerateTransformBackExtensionMethodTask(Transform transform)
+            : base(transform)
         {
         }
 
@@ -24,14 +25,14 @@ namespace DtoGen.Core.Generators
         public override IEnumerable<MemberDeclarationSyntax> Render()
         {
             // TransformToSource method
-            var method = SyntaxHelper.GenerateExtensionMethod("TransformToSource", Transform.SourceType.FullName, new []
+            var method = SyntaxHelper.GenerateExtensionMethod("TransformToSource", Transform.SourceType.FullName, new[]
                 {
-                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetType.FullName, true)
+                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetTypeName, true)
                 },
                 new[] { 
                     SyntaxHelper.GenerateAttribute(
                         typeof(DtoConvertFunctionAttribute),
-                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetType)), 
+                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetTypeName)), 
                         SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.SourceType)),
                         SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                     )
@@ -50,13 +51,13 @@ namespace DtoGen.Core.Generators
             // PopulateSource method
             var method2 = SyntaxHelper.GenerateExtensionMethod("PopulateSource", null, new[]
                 {
-                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetType.FullName, true),
+                    SyntaxHelper.GenerateMethodParameter("target", Transform.TargetTypeName, true),
                     SyntaxHelper.GenerateMethodParameter("source", Transform.SourceType.FullName, false)
                 },
                 new[] { 
                     SyntaxHelper.GenerateAttribute(
                         typeof(DtoConvertFunctionAttribute),
-                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetType)), 
+                        SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.TargetTypeName)), 
                         SyntaxFactory.TypeOfExpression(SyntaxHelper.GenerateTypeSyntax(Transform.SourceType)),
                         SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
                     )
@@ -71,8 +72,8 @@ namespace DtoGen.Core.Generators
                 ));
 
             // generate the static class
-            var className = Transform.TargetType.Name + "Extensions";
-            yield return SyntaxHelper.GenerateNamespace(Transform.TargetType.Namespace, new MemberDeclarationSyntax[]
+            var className = Transform.TargetTypeName + "Extensions";
+            yield return SyntaxHelper.GenerateNamespace(Transform.TargetNameSpace, new MemberDeclarationSyntax[]
             {
                 SyntaxHelper.GenerateClass(
                     className, 
@@ -80,7 +81,7 @@ namespace DtoGen.Core.Generators
                     new MemberDeclarationSyntax[] { method, method2 },
                     new[] { SyntaxHelper.GenerateAttribute(typeof(DtoGeneratedAttribute)) }
                 ) 
-            }, 
+            },
             GetUsingsForNamespace());
         }
     }
